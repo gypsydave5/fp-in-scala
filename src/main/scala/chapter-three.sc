@@ -111,8 +111,54 @@ val bakwdzList = reverse(list)
 
 // Exercise 3.13
 def foldLWithR[A, B](z: B)(as: List[A])(f: (B, A) => B): B =
-  foldRight(as: List[A], (b: B) => b) ((a: A, acc: (B) => B) => (b) => f(acc(b), a)) (z)
+  foldRight(as: List[A], (b: B) => b) ((a: A, acc: (B) => B) => (b) => acc(f(b, a))) (z)
 val x = foldLWithR(0)(list)(_ + _)
 
 def foldRWithL[A, B](z: B)(as: List[A])(f: (A, B) => B): B =
-  foldLeft((b: B) => b) (as: List[A]) ((acc: (B) => B, a: A) => (b) => f(a, acc(b))) (z)
+  foldLeft((b: B) => b) (as: List[A]) ((acc: (B) => B, a: A) => (b) => acc(f(a, b))) (z)
+
+// Exercise 3.14
+def appendL[A](l1: List[A], l2: List[A]): List[A] =
+  foldRWithL (l2) (l1) ((a, acc) => Cons(a, acc))
+  //foldLWithR (l2) (l1) ((acc, a) => Cons(a, acc))
+
+appendL(list, list)
+
+sealed trait ListOfList[A]
+
+// Exercise 3.15
+def concat[A](l: List[List[A]]): List[A] =
+  foldRWithL(Nil:List[A])(l)((a, acc) => foldRWithL(acc)(a)((a, acc) => Cons(a, acc)))
+concat(List(list, list, list))
+
+// Exercise 3.16
+def map[A,B](f: (A) => B)(l: List[A]): List[B] =
+  foldRWithL(Nil: List[B])(l)((a, acc) => Cons(f(a), acc))
+
+def add1(l: List[Int]): List[Int] = map[Int, Int](_ + 1)(l)
+add1(list)
+
+// Exercise 3.17
+def stringify(l: List[Double]) = map[Double, String](_.toString)(l)
+
+// Exercise 3.18 - see above
+
+// Exercise 3.19
+def filter[A](p: (A) => Boolean)(l: List[A]) =
+  foldRWithL(Nil:List[A])(l)((a, acc) => if (p(a)) Cons(a, acc) else acc)
+filter[Int](x => (x % 2) == 0)(list)
+
+// Exercise 3.20
+def flatMap[A, B](as: List[A])(f: A => List[B]): List[B] =
+  foldRWithL(Nil: List[B])(as)((a, acc) => append(f(a), acc))
+flatMap(List(1, 2, 3))(i => List(i, i))
+
+// Exercise 3.21
+def filterFM[A](p: (A) => Boolean)(l: List[A]) =
+  flatMap(l)(a => if (p(a)) List(a) else Nil)
+filter[Int](x => (x % 2) != 0)(list)
+
+// Exercise 3.22
+def zipWith[A,B,C](f: (A, B) => C)(l1: List[A])(l2: List[B]): List[C]
+  
+
