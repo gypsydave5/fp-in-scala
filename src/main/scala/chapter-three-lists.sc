@@ -1,3 +1,5 @@
+import scala.collection.immutable
+
 sealed trait List[+A]
 case object Nil extends List[Nothing]
 case class Cons[+A](head: A, tail: List[A]) extends List[A]
@@ -158,7 +160,33 @@ def filterFM[A](p: (A) => Boolean)(l: List[A]) =
   flatMap(l)(a => if (p(a)) List(a) else Nil)
 filter[Int](x => (x % 2) != 0)(list)
 
-// Exercise 3.22
-def zipWith[A,B,C](f: (A, B) => C)(l1: List[A])(l2: List[B]): List[C]
-  
+// Exercise 3.22 and 3.23
+def zipWith[A,B,C](f: (A, B) => C)(l1: List[A])(l2: List[B]): List[C] = {
+  def alwaysEmpty = (_:List[B]) => Nil:List[C]
+  def step(a: A, acc: List[B] => List[C]): (List[B]) => List[C] = {
+      case Cons(b, bs) => Cons(f(a, b), acc(bs))
+      case Nil => Nil
+  }
+
+  foldRight(l1, alwaysEmpty)(step)(l2)
+}
+
+zipWith[Int,Int,Int](_ + _)(list)(drop(1, list))
+zipWith[String, String, String](_.concat(_))(List("Batman ", "Mork "))(List("and Robin", "and Mindy"))
+
+// Exercise 3.24
+def hasSubsequence[A](l1: List[A], l2: List[A]): Boolean = (l1, l2) match {
+  case (Nil, Nil) => true
+  case (Nil, _) => false
+  case (_, Nil) => true
+  case (Cons(x, xs), Cons(y, ys)) => if (x == y) hasSubsequence(xs, ys) else hasSubsequence(xs, l2)
+}
+
+hasSubsequence(List(1,2,3,4), List(3,4))
+hasSubsequence(List(1,2,3,4), List(2,3))
+hasSubsequence(List(1,2,3,4), List(4))
+hasSubsequence(List(1,2,3,4), Nil)
+hasSubsequence(List(1,2,3,4), List(5))
+
+
 
