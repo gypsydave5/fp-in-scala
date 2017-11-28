@@ -1,39 +1,51 @@
+import scala.annotation.tailrec
+
 sealed trait Tree[+A]
 case class Leaf[A](value: A) extends Tree[A]
 case class Branch[A](left: Tree[A], right: Tree[A]) extends Tree[A]
 
-val tree = Branch(
-  Branch(
-    Leaf(5), Branch(Leaf(7), Leaf(8))
-  ),
-  Branch(
-    Leaf(3),Leaf(4)
-  )
-)
+// Exercise 3.25
 
-def size[A](tree: Tree[A]): Int = tree match {
+def size[A](t: Tree[A]): Int = t match {
   case Leaf(_) => 1
-  case Branch(t1, t2) => 1 + size(t1) + size(t2)
+  case Branch(left, right) => size(left) + size(right)
 }
 
-def maximum(tree: Tree[Int]): Int = tree match {
-    case Leaf(x) => x
-    case Branch(l1, l2) => maximum(l1) max maximum(l2)
+// Exercise 3.26
+def maximum(t: Tree[Int]): Int = t match {
+  case Leaf(x) => x
+  case Branch(left, right) => maximum(left) max maximum(right)
 }
 
-def depth(tree: Tree[Int]): Int = {
-  def recur(tree: Tree[Int], depth: Int): Int = tree match {
-    case Leaf(_) => depth
-    case Branch(l1, l2) => recur(l1, depth + 1) max recur(l2, depth + 1)
+// Exercise 3.27
+def depth[A](t: Tree[A]): Int = t match {
+  case Leaf(_) => 0
+  case Branch(left, right) => depth(left) max depth(right)
+}
+
+// Exercise 3.28
+def map[A,B](t: Tree[A])(f: (A) => B): Tree[B] = t match {
+  case Leaf(a) => Leaf(f(a))
+  case Branch(left, right) => Branch(map(left)(f), map(right)(f))
+}
+
+// Exercise 3.29
+def fold[A, B](t: Tree[A], z: B, f: (B, A) => B): B = t match {
+  case Leaf(a) => f(z, a)
+  case Branch(left, right) => fold(right, fold(left, z, f), f)
+}
+
+def foldL[A, B](t: Tree[A])(z: B)(f: (B, A) => B): B = {
+  @tailrec def recur(z: B)(t: Tree[A])(f: ((B, A) => B))(cont: (B) => B): B = t match {
+    case Leaf(a) => cont(f(z, a))
+    case Branch(left, right) => recur(z) (left) (f) ((b: B) => recur(b)(right)(f)(cont))
   }
 
-  recur(tree, 1)
+  recur(z)(t)(f)((b: B) => b)
 }
 
-def map[A, B](tree: Tree[A])(f: (A) => B): Tree[B] = tree match {
+def sizeF[A](t: Tree[A]): Int = foldL(t)(0)((acc, _) => acc + 1)
 
-}
+val exampleTree = Branch(Branch(Leaf(1), Leaf(2)), Branch(Leaf(3), Leaf(4)))
 
-size(tree)
-maximum(tree)
-depth(tree)
+size(exampleTree) == sizeF(exampleTree)
